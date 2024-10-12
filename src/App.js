@@ -54,6 +54,8 @@ function App() {
 
         {/* User Video Upload Input */}
         <input type="file" id="videoInput" accept="video/*" onChange={handleVideoUpload} />
+        
+        {/* Button to trigger the analysis */}
         <button onClick={analyzeForm}>Analyze Form</button>
 
         {/* Video and Form Container */}
