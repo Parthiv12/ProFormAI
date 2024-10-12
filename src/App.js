@@ -12,7 +12,7 @@ function App() {
   const handleVideoUpload = (event) => {
     const file = event.target.files[0];
     setVideoFile(file);
-    setFeedback(''); // Clear any previous feedback when a new video is uploaded
+    setFeedback(''); // Clear feedback when a new video is uploaded
   };
 
   // Simulate AI-based feedback (to be replaced with actual AI processing)
@@ -22,9 +22,9 @@ function App() {
       return;
     }
 
-    // Simulate form analysis and feedback (replace this with your AI processing)
     setFeedback('Processing your video...');
-    
+
+    // Simulate form analysis and feedback (replace with your AI processing)
     setTimeout(() => {
       const simulatedFeedback = "Keep your back straight and lower your hips.";
       setFeedback(`AI Feedback: ${simulatedFeedback}`);
