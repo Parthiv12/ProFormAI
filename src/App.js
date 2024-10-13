@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import './App.css';
 
 function App() {
@@ -6,17 +6,17 @@ function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
-  const [recordingTime, setRecordingTime] = useState(0);
-  const [cameras, setCameras] = useState([]);
   const [selectedCamera, setSelectedCamera] = useState('');
   const videoRef = useRef(null);
   const recordedVideoRef = useRef(null);
 
-  const startCamera = (cameraId) => {
+  const handleCameraChange = (event) => {
+    setSelectedCamera(event.target.value);
+  };
+
+  const startCamera = () => {
     navigator.mediaDevices
-      .getUserMedia({
-        video: { deviceId: cameraId ? { exact: cameraId } : undefined },
-      })
+      .getUserMedia({ video: { deviceId: selectedCamera ? { exact: selectedCamera } : undefined } })
       .then((stream) => {
         videoRef.current.srcObject = stream;
         setIsCameraOn(true);
@@ -34,56 +34,26 @@ function App() {
   };
 
   const startRecording = () => {
-    // Check if the camera stream is active
-    const stream = videoRef.current?.srcObject;
-    
-    if (!stream) {
-      console.error('No active camera stream found. Please start the camera before recording.');
-      return;
-    }
+    const stream = videoRef.current.srcObject;
+    const mediaRecorder = new MediaRecorder(stream);
+    setMediaRecorder(mediaRecorder);
 
-    try {
-      const mediaRecorder = new MediaRecorder(stream);
-      setMediaRecorder(mediaRecorder);
+    const chunks = [];
+    mediaRecorder.ondataavailable = (event) => chunks.push(event.data);
 
-      const chunks = [];
-      mediaRecorder.ondataavailable = (event) => chunks.push(event.data);
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/mp4' });
+      const videoUrl = URL.createObjectURL(blob);
+      setVideoUrl(videoUrl);
+    };
 
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/mp4' });
-        const videoUrl = URL.createObjectURL(blob);
-        setVideoUrl(videoUrl);
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-
-      const recordingInterval = setInterval(() => {
-        setRecordingTime((prevTime) => prevTime + 1);
-      }, 1000);
-
-      setTimeout(() => clearInterval(recordingInterval), 60000); // Stops the timer after 60 seconds
-    } catch (err) {
-      console.error('Error starting recording:', err);
-    }
+    mediaRecorder.start();
+    setIsRecording(true);
   };
 
   const stopRecording = () => {
     mediaRecorder.stop();
     setIsRecording(false);
-    setRecordingTime(0);
-  };
-
-  useEffect(() => {
-    navigator.mediaDevices.enumerateDevices().then((devices) => {
-      const videoDevices = devices.filter((device) => device.kind === 'videoinput');
-      setCameras(videoDevices);
-      if (videoDevices.length > 0) setSelectedCamera(videoDevices[0].deviceId);
-    });
-  }, []);
-
-  const scrollToSection = (sectionId) => {
-    document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -92,64 +62,56 @@ function App() {
       <header className="main-header" style={{ backgroundImage: `url(https://t3.ftcdn.net/jpg/04/29/35/62/360_F_429356296_CVQ5LkC6Pl55kUNLqLisVKgTw9vjyif1.jpg)` }}>
         <div className="overlay">
           <div className="content-wrapper">
-            <h1 style={{ fontSize: '5rem', color: 'white' }}>ProFormAI</h1>
-            <p style={{ fontSize: '1.5rem', color: 'white' }}>
-              Enhance your workout form with AI-based analysis.
-            </p>
-            <button className="get-started-btn" onClick={() => scrollToSection('aboutSection')} style={{ backgroundColor: '#4682B4', color: 'white', borderRadius: '30px' }}>
-              Get Started
-            </button>
+            <h1>ProFormAI</h1>
+            <p>Enhance your workout form with AI-based analysis.</p>
+            <button className="get-started-btn">Get Started</button>
           </div>
         </div>
       </header>
 
-      {/* Menu Section */}
-      <nav className="top-menu">
-        <button onClick={() => scrollToSection('aboutSection')}>About Us</button>
-        <button onClick={() => scrollToSection('workoutSection')}>Analyzer</button>
-      </nav>
-
       {/* About Us Section */}
-      <section id="aboutSection" className="about-section" style={{ backgroundImage: `url(https://t3.ftcdn.net/jpg/04/29/35/62/360_F_429356296_CVQ5LkC6Pl55kUNLqLisVKgTw9vjyif1.jpg)` }}>
+      <section id="aboutSection" className="about-section" style={{ backgroundImage: `url(https://img.freepik.com/free-photo/fitness-concept-with-equipment-frame_23-2148531436.jpg)` }}>
         <div className="about-container">
           <div className="about-text">
             <h2>About Us</h2>
             <p>
               ProFormAI was created with a mission to revolutionize how fitness enthusiasts approach their workouts.
-              Our web app allows users to record themselves performing specific exercises, compare their form to professional 
+              Our web app allows users to record themselves performing specific exercises, compare their form to professional
               standards, and receive feedback and recommendations on areas for improvement from our AI system.
-              Our goal is to make expert-level fitness advice accessible to everyone, helping users perfect their form 
+              Our goal is to make expert-level fitness advice accessible to everyone, helping users perfect their form
               and avoid injuries, all from the convenience of their own homes or gyms.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Workout Section */}
-      <section id="workoutSection" className="workout-section">
+      {/* Record a Video Section */}
+      <section id="workoutSection" className="workout-section" style={{ backgroundImage: `url(https://img.freepik.com/free-photo/fitness-concept-with-equipment-frame_23-2148531436.jpg)` }}>
         <h2>Record a Video</h2>
         <div className="video-container">
-          <div>
-            <video ref={videoRef} autoPlay muted className="camera-feed"></video>
-          </div>
-          <div>
-            <video ref={recordedVideoRef} controls src={videoUrl} className="recorded-video"></video>
-          </div>
+          <video ref={videoRef} autoPlay muted className="camera-feed"></video>
+          {videoUrl && <video ref={recordedVideoRef} controls src={videoUrl} className="recorded-video"></video>}
         </div>
-        <div>
-          <label>Choose Camera:</label>
-          <select onChange={(e) => startCamera(e.target.value)} value={selectedCamera}>
-            {cameras.map((camera) => (
-              <option key={camera.deviceId} value={camera.deviceId}>
-                {camera.label}
-              </option>
-            ))}
+
+        <div className="controls">
+          <select onChange={handleCameraChange}>
+            <option value="">Default Camera</option>
+            {/* Add available camera options dynamically */}
           </select>
+          <button onClick={startCamera} disabled={isCameraOn}>Turn Camera On</button>
+          <button onClick={stopCamera} disabled={!isCameraOn}>Stop Camera</button>
+          <button onClick={startRecording} disabled={!isCameraOn || isRecording}>Start Recording</button>
+          <button onClick={stopRecording} disabled={!isRecording}>Stop Recording</button>
         </div>
-        <div>
-          {!isRecording && <button onClick={startRecording} className="record-btn">Start Recording</button>}
-          {isRecording && <button onClick={stopRecording} className="record-btn">Stop Recording ({recordingTime}s)</button>}
-          <button onClick={stopCamera} className="stop-camera-btn">Stop Camera</button>
+      </section>
+
+      {/* Progress Tracker Section */}
+      <section id="progressSection" className="progress-section" style={{ backgroundImage: `url(https://img.freepik.com/free-photo/fitness-concept-with-equipment-frame_23-2148531436.jpg)` }}>
+        <h2>Progress Tracker</h2>
+        <div className="progress-container">
+          <input type="text" placeholder="Enter Weekly Progress" />
+          <input type="text" placeholder="Set Next Week's Goal" />
+          <button className="submit-btn">Submit Progress</button>
         </div>
       </section>
     </div>
