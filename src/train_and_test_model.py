@@ -7,10 +7,17 @@ from extract_features_from_videos import extract_multiple_features  # Import the
 
 # Process correct and incorrect form videos only once
 print("Processing correct form videos...")
+<<<<<<< HEAD
 correct_keypoints = process_videos_in_folder(r'C:\Users\abhin\Desktop\ProFormAI\ProFormAI\src\Bicep Curls cor')
 
 print("Processing incorrect form videos...")
 incorrect_keypoints = process_videos_in_folder(r'C:\Users\abhin\Desktop\ProFormAI\ProFormAI\src\Bicep Curls cor')
+=======
+correct_keypoints = process_videos_in_folder('D:\\ProFormAI\\ProFormAI\\src\\Bicep Curls cor')
+
+print("Processing incorrect form videos...")
+incorrect_keypoints = process_videos_in_folder('D:\\ProFormAI\\ProFormAI\\src\\Bicep Curls incor')
+>>>>>>> 3654dfda007a14132494bb50e136f94f24006cc9
 
 # Extract features only once
 print("Extracting features for correct form...")

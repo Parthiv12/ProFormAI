@@ -46,5 +46,10 @@ def process_videos_in_folder(folder_path):
     return all_keypoints  # Return a list of lists, where each element is the keypoints for a video
 
 # Example usage: Process all videos in folders
+<<<<<<< HEAD
 correct_keypoints = process_videos_in_folder(r'C:\Users\abhin\Desktop\ProFormAI\ProFormAI\src\Bicep Curls cor')
 correct_keypoints = process_videos_in_folder('C:\\Users\\abhin\\Desktop\\ProFormAI\\ProFormAI\\src\\Bicep Curls cor')
+=======
+correct_keypoints = process_videos_in_folder('D:\\ProFormAI\\ProFormAI\\src\\Bicep Curls cor')
+incorrect_keypoints = process_videos_in_folder('D:\\ProFormAI\\ProFormAI\\src\\Bicep Curls incor')
+>>>>>>> 3654dfda007a14132494bb50e136f94f24006cc9
