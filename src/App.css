@@ -1,0 +1,136 @@
+/* Main header section styling */
+.main-header {
+  background-size: cover;
+  background-position: center;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.content-wrapper {
+  text-align: center;
+}
+
+.get-started-btn {
+  background-color: #ff6b6b;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.get-started-btn:hover {
+  background-color: #ff4d4d;
+}
+
+.top-menu {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background: #333;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+.top-menu button {
+  color: white;
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  margin: 0 15px;
+  cursor: pointer;
+}
+
+.top-menu button:hover {
+  color: #ff6b6b;
+}
+
+/* About Us Section */
+.about-section {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+  padding: 50px;
+  min-height: 100vh;
+  color: white;
+}
+
+.about-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  max-width: 1200px;
+  width: 100%;
+  padding: 20px;
+}
+
+.about-text {
+  text-align: center;
+}
+
+.about-text h2 {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+.about-text p {
+  font-size: 1.2rem;
+  line-height: 1.8;
+}
+
+/* Workout Section */
+.workout-section {
+  padding: 50px;
+  background-color: #f0f0f0;
+  text-align: center;
+}
+
+.workout-section h2 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+}
+
+.video-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.camera-feed {
+  width: 400px;
+  height: 300px;
+  background-color: black;
+}
+
+.recorded-video {
+  width: 400px;
+  height: 300px;
+}
+
+.record-btn, .stop-camera-btn {
+  background-color: #4682B4;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  margin: 10px;
+}
+
+.record-btn:hover, .stop-camera-btn:hover {
+  background-color: #3572A5;
+}
