@@ -1,70 +1,96 @@
-import React, { useState } from 'react';
-import './App.css';
+from flask import Flask, request, jsonify
+import cv2
+import mediapipe as mp
+import os
+import math
 
-function App() {
-  const [videoFile, setVideoFile] = useState(null);
-  const [feedback, setFeedback] = useState('');
+app = Flask(__name__)
 
-  // Predefined reference video of a professional doing dumbbell curls
-  const referenceVideo = "path/to/professional-dumbbell-curl-video.mp4";
+# Root route to handle 404 errors and test if Flask is running
+@app.route('/')
+def home():
+    return "Flask app is running!"
 
-  // Handle video file input from the user
-  const handleVideoUpload = (event) => {
-    const file = event.target.files[0];
-    setVideoFile(file);
-    setFeedback(''); // Clear feedback when a new video is uploaded
-  };
+# Initialize mediapipe pose detection
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose()
 
-  // Simulate AI-based feedback (to be replaced with actual AI processing)
-  const analyzeForm = () => {
-    if (!videoFile) {
-      setFeedback('Please upload a video first!');
-      return;
-    }
+# Function to process video and extract pose landmarks
+def process_video(file_path):
+    video = cv2.VideoCapture(file_path)
+    angles = []
+    
+    while video.isOpened():
+        ret, frame = video.read()
+        if not ret:
+            break
 
-    setFeedback('Processing your video...');
+        # Convert the frame to RGB
+        image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    // Simulate form analysis and feedback (replace with your AI processing)
-    setTimeout(() => {
-      const simulatedFeedback = "Keep your back straight and lower your hips.";
-      setFeedback(`AI Feedback: ${simulatedFeedback}`);
-    }, 2000); // Simulate a 2-second delay for analysis
-  };
+        # Process the image and extract pose landmarks
+        results = pose.process(image_rgb)
 
-  return (
-    <div className="App">
-      <header className="App-header">
-        <h1>ProFormAI - Dumbbell Curl Analysis</h1>
-        <p>Upload your workout video for AI-based form analysis.</p>
-        
-        {/* User Video Upload Input */}
-        <input type="file" id="videoInput" accept="video/*" onChange={handleVideoUpload} />
-        
-        {/* Button to trigger the analysis */}
-        <button onClick={analyzeForm}>Analyze Form</button>
+        # Calculate joint angles if pose landmarks are detected
+        if results.pose_landmarks:
+            landmarks = results.pose_landmarks.landmark
+            angles.append(calculate_elbow_angle(landmarks))
 
-        {/* Display AI feedback */}
-        <div className="feedback">
-          {feedback && <p>{feedback}</p>}
-        </div>
+    video.release()
+    return angles
 
-        {/* Display uploaded video preview */}
-        {videoFile && (
-          <video width="400" controls>
-            <source src={URL.createObjectURL(videoFile)} type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-        )}
+# Function to calculate the elbow angle
+def calculate_elbow_angle(landmarks):
+    def calculate_angle(a, b, c):
+        angle = abs(math.degrees(math.atan2(c[1] - b[1], c[0] - b[0]) - 
+                                  math.atan2(a[1] - b[1], a[0] - b[0])))
+        return angle if angle < 180 else 360 - angle
 
-        {/* Display professional reference video for comparison */}
-        <h3>Reference Video:</h3>
-        <video width="400" controls>
-          <source src={referenceVideo} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-      </header>
-    </div>
-  );
-}
+    # Get coordinates for shoulder, elbow, wrist
+    shoulder = [landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].x,
+                landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].y]
+    elbow = [landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].x,
+             landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].y]
+    wrist = [landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].x,
+             landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].y]
 
-export default App;
+    return calculate_angle(shoulder, elbow, wrist)
+
+# Route to handle video uploads and analysis
+@app.route('/analyze-video', methods=['POST'])
+def analyze_video():
+    if 'video' not in request.files:
+        return jsonify({'feedback': 'No video uploaded'}), 400
+    
+    video = request.files['video']
+    video_path = os.path.join('uploads', video.filename)
+    video.save(video_path)
+
+    # Process the uploaded video and the professional reference video
+    user_angles = process_video(video_path)
+    reference_angles = process_video('reference_video.mp4')  # Path to the professional video
+
+    # Compare the angles and generate feedback
+    feedback = compare_angles(user_angles, reference_angles)
+
+    return jsonify({'feedback': feedback})
+
+# Compare user's angles with reference angles
+def compare_angles(user_angles, reference_angles):
+    feedback = ''
+    if len(user_angles) > 0 and len(reference_angles) > 0:
+        angle_difference = abs(user_angles[0] - reference_angles[0])  # Compare the first frame's elbow angle
+
+        if angle_difference > 10:
+            feedback = f"Your elbow angle is off by {angle_difference:.2f} degrees. Try to match the professional's form."
+        else:
+            feedback = "Your form looks good!"
+    else:
+        feedback = "Could not analyze the video."
+
+    return feedback
+
+if __name__ == '__main__':
+    if not os.path.exists('uploads'):
+        os.makedirs('uploads')
+    app.run(debug=True)
