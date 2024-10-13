@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import './App.css';
 
 function App() {
-  const [videoFile, setVideoFile] = useState(null);
-  const [feedback, setFeedback] = useState('');
-  const [userVectors, setUserVectors] = useState([]);
-  const [professionalVectors, setProfessionalVectors] = useState([]);
+  const [videoFile, setVideoFile] = useState(null); // Holds the uploaded video
+  const [feedback, setFeedback] = useState(''); // Holds the feedback from the backend
+  const [userVectors, setUserVectors] = useState([]); // Holds the user's vectors
+  const [professionalVectors, setProfessionalVectors] = useState([]); // Holds the professional's vectors
 
   // Handle video file input from the user
   const handleVideoUpload = (event) => {
@@ -26,17 +26,29 @@ function App() {
     const formData = new FormData();
     formData.append('video', videoFile);
 
-    // Send the video to the back-end
-    const response = await fetch('http://localhost:5000/analyze-video', {
-      method: 'POST',
-      body: formData,
-    });
+    try {
+      // Send the video to the back-end
+      const response = await fetch('http://localhost:5000/analyze-video', {
+        method: 'POST',
+        body: formData,
+      });
 
-    // Get the feedback and vectors from the server
-    const data = await response.json();
-    setFeedback(`AI Feedback: ${data.feedback}`);
-    setUserVectors(data.user_vectors);
-    setProfessionalVectors(data.professional_vectors);
+      // Ensure the response is successful
+      if (!response.ok) {
+        throw new Error('Error analyzing the video.');
+      }
+
+      // Get the feedback and vectors from the server
+      const data = await response.json();
+
+      // Set the feedback and vectors received from the server
+      setFeedback(`AI Feedback: ${data.feedback}`);
+      setUserVectors(data.user_vectors);
+      setProfessionalVectors(data.professional_vectors);
+    } catch (error) {
+      console.error('Error during video analysis:', error);
+      setFeedback('An error occurred during video analysis.');
+    }
   };
 
   // Function to display the vectors in the UI

@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import cv2
 import mediapipe as mp
 import os
@@ -108,47 +108,29 @@ def draw_landmarks(frame, pose_landmarks):
         mp_pose.POSE_CONNECTIONS,
         landmark_drawing_spec=mp_drawing_styles.get_default_pose_landmarks_style())
 
-# Define a root route to test if the Flask app is running
-@app.route('/')
-def home():
-    return "Flask app is running!"
+# Define a POST route to compare videos and return feedback
+@app.route('/compare-videos', methods=['POST'])
+def compare_videos():
+    data = request.get_json()  # Expecting JSON with paths
+    user_video_path = data.get('user_video_path')
+    reference_video_path = data.get('reference_video_path')
 
-# Function to handle video processing in the background
-def process_videos_in_background(user_video_path, reference_video_path):
-    # Open the output video writer
-    user_video = cv2.VideoCapture(user_video_path)
-    width = int(user_video.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(user_video.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fps = user_video.get(cv2.CAP_PROP_FPS)
-    output_writer = cv2.VideoWriter(output_video_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
-    user_video.release()
+    if not user_video_path or not reference_video_path:
+        return jsonify({'error': 'Missing video paths'}), 400
 
     # Process the user's video and the professional reference video
-    user_angles = process_video(user_video_path, output_writer)
-    reference_angles = process_video(reference_video_path, output_writer)
+    user_angles = process_video(user_video_path)
+    reference_angles = process_video(reference_video_path)
 
-    # Close the output video writer
-    output_writer.release()
-
-    # Compare angles
     if len(user_angles) == 0 or len(reference_angles) == 0:
-        logging.error('Could not analyze the video due to insufficient data.')
-    else:
-        min_length = min(len(user_angles), len(reference_angles))
-        feedback = compare_vectors(user_angles[:min_length], reference_angles[:min_length])
-        logging.info(f"Video processing complete. Feedback: {feedback}")
+        return jsonify({'error': 'Could not analyze the videos'}), 500
 
-# Route to compare the two specific videos and generate a visual output
-@app.route('/compare-videos', methods=['GET', 'POST'])
-def compare_videos():
-    user_video_path = r'D:\Temp downloads\f1.mp4'  # Path to the user's video
-    reference_video_path = r'D:\Temp downloads\p2copy.mp4'  # Path to the professional video
+    # Compare the vectors
+    min_length = min(len(user_angles), len(reference_angles))
+    feedback = compare_vectors(user_angles[:min_length], reference_angles[:min_length])
 
-    # Start the video processing in a background thread
-    thread = threading.Thread(target=process_videos_in_background, args=(user_video_path, reference_video_path))
-    thread.start()
-
-    return jsonify({'message': 'Video processing started in the background.'})
+    # Return the feedback to the front end
+    return jsonify({'feedback': feedback})
 
 # Compare user's hand vectors with reference hand vectors
 def compare_vectors(user_vectors, reference_vectors):
